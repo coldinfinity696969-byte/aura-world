@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#070A18">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>AURA WORLD</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+
+  <!-- ЭКРАН 1: ПОРТАЛ -->
+  <section id="screen-intro" class="screen active">
+    <canvas id="intro-canvas"></canvas>
+    <div class="intro-content">
+      <div class="logo-orb"></div>
+      <h1 class="logo">AURA<span>WORLD</span></h1>
+      <p class="tagline">Твоё настроение стало местом.</p>
+      <button class="btn-primary" id="btn-start">Создать мой мир</button>
+      <p class="disclaimer">AURA WORLD — не медицинское приложение<br>и не заменяет психолога или врача.</p>
+    </div>
+  </section>
+
+  <!-- ЭКРАН 2: CHECK-IN (7 шагов) -->
+  <section id="screen-checkin" class="screen">
+    <div class="checkin-header">
+      <button class="btn-back" id="btn-back">←</button>
+      <div class="progress"><div class="progress-fill" id="progress-fill"></div></div>
+    </div>
+
+    <div class="checkin-steps">
+      <div class="step active" data-step="0">
+        <h2>Как выглядит твой внутренний мир сегодня?</h2>
+        <p class="step-sub">Выбери состояние</p>
+        <div class="mood-grid" id="mood-grid"></div>
+      </div>
+
+      <div class="step" data-step="1">
+        <h2>Сколько в тебе энергии?</h2>
+        <p class="step-sub" id="energy-label">средне</p>
+        <div class="slider-wrap">
+          <input type="range" id="slider-energy" min="0" max="100" value="50">
+          <div class="slider-value" id="energy-value">50</div>
+        </div>
+        <button class="btn-primary btn-next" data-next>Дальше</button>
+      </div>
+
+      <div class="step" data-step="2">
+        <h2>Социальная батарейка</h2>
+        <p class="step-sub" id="social-label">можно общаться, но без давления</p>
+        <div class="slider-wrap">
+          <input type="range" id="slider-social" min="0" max="100" value="50">
+          <div class="slider-value" id="social-value">50</div>
+        </div>
+        <button class="btn-primary btn-next" data-next>Дальше</button>
+      </div>
+
+      <div class="step" data-step="3">
+        <h2>Куда сегодня утекла энергия?</h2>
+        <p class="step-sub">Что забрало больше всего</p>
+        <div class="mood-grid" id="drain-grid"></div>
+      </div>
+
+      <div class="step" data-step="4">
+        <h2>Чего сейчас хочется больше всего?</h2>
+        <p class="step-sub">Одно, самое честное</p>
+        <div class="mood-grid" id="want-grid"></div>
+      </div>
+
+      <div class="step" data-step="5">
+        <h2>Сколько шума внутри?</h2>
+        <p class="step-sub" id="noise-label">лёгкий фон</p>
+        <div class="slider-wrap">
+          <input type="range" id="slider-noise" min="0" max="100" value="40">
+          <div class="slider-value" id="noise-value">40</div>
+        </div>
+        <button class="btn-primary btn-next" data-next>Дальше</button>
+      </div>
+
+      <div class="step" data-step="6">
+        <h2>Одна мысль дня</h2>
+        <p class="step-sub">Необязательно, но мир станет точнее</p>
+        <textarea id="note-input" placeholder="Сегодня я…" rows="3" maxlength="200"></textarea>
+        <button class="btn-primary" id="btn-create">Создать мир ✦</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ЭКРАН 3: АНАЛИЗ -->
+  <section id="screen-loading" class="screen">
+    <div class="loading-orb"></div>
+    <p class="loading-text" id="loading-text">Читаю энергию…</p>
+  </section>
+
+  <!-- ЭКРАН 4: МИР -->
+  <section id="screen-world" class="screen">
+    <canvas id="world-canvas"></canvas>
+
+    <div class="hud">
+      <header class="hud-top">
+        <div class="brand">
+          <div class="logo-orb small"></div>
+          <span>AURA <em>WORLD</em></span>
+        </div>
+        <div class="hud-top-actions">
+          <button class="btn-round" id="btn-spark" title="Послание дня">
+            <svg viewBox="0 0 24 24"><path d="M12 3l1.8 5.5L19 10l-5.2 1.5L12 17l-1.8-5.5L5 10l5.2-1.5z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+            <i class="dot"></i>
+          </button>
+          <button class="btn-round" id="btn-menu" title="Меню">
+            <svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="19" cy="12" r="1.6" fill="currentColor"/></svg>
+          </button>
+        </div>
+      </header>
+
+      <aside class="rail-left">
+        <div class="rail-item scene-item">
+          <div class="rail-icon active">
+            <svg viewBox="0 0 24 24" id="rail-scene-icon"><path d="M3 9c2-1.6 4-1.6 6 0s4 1.6 6 0 4-1.6 6 0M3 14c2-1.6 4-1.6 6 0s4 1.6 6 0 4-1.6 6 0" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          </div>
+          <span id="rail-scene-label">ОКЕАН</span>
+        </div>
+        <button class="rail-item rail-toggle" data-weather="rain">
+          <div class="rail-icon">
+            <svg viewBox="0 0 24 24"><path d="M7 12a5 5 0 1 1 9.6-2H17a3.5 3.5 0 0 1 0 7H8a4 4 0 0 1-1-7.9z" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M9 19.5l-.8 2M13 19.5l-.8 2M17 19.5l-.8 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          </div>
+          <span>ДОЖДЬ</span>
+        </button>
+      </aside>
+
+      <aside class="rail-right">
+        <button class="rail-r-item" id="btn-like">
+          <svg viewBox="0 0 24 24"><path d="M12 20s-7-4.6-9-9a5 5 0 0 1 9-3 5 5 0 0 1 9 3c-2 4.4-9 9-9 9z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+          <span id="like-count">0</span>
+        </button>
+        <div class="rail-r-item">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="9.5" cy="11" r="0.9" fill="currentColor"/><circle cx="14.5" cy="11" r="0.9" fill="currentColor"/></svg>
+          <span id="social-state-label">ОДИН</span>
+          <i class="state-line"></i>
+        </div>
+      </aside>
+
+      <div class="phrase-toast" id="phrase-toast"></div>
+
+      <div class="world-info">
+        <div class="world-kicker">✦ <span id="world-kicker">МИР ОКЕАНА</span> <b id="world-date"></b></div>
+        <div class="rare-badge" id="rare-badge" hidden></div>
+        <h2 class="world-name" id="world-name">Океан синей статики</h2>
+        <p class="world-sub" id="world-sub">устал, но недосягаем</p>
+        <div class="mood-row">НАСТРОЕНИЕ <em>✦</em> <span id="mood-tag">МЕЛАНХОЛИЯ</span></div>
+      </div>
+
+      <div class="act-row">
+        <button class="act-chip" id="act-breath">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="1.2" opacity="0.5"/></svg>
+          Подышать
+        </button>
+        <button class="act-chip" id="act-capsule">
+          <svg viewBox="0 0 24 24"><path d="M7 3h10M7 21h10M8 3c0 4 3 5.5 4 6.5 1-1 4-2.5 4-6.5M8 21c0-4 3-5.5 4-6.5 1 1 4 2.5 4 6.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          Капсула времени
+        </button>
+      </div>
+
+      <div class="stat-cards">
+        <div class="stat-card">
+          <div class="stat-head">
+            <svg viewBox="0 0 24 24"><path d="M13 2L5 13h5l-1 9 8-11h-5z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+            <span>ЭНЕРГИЯ</span>
+          </div>
+          <div class="stat-body">
+            <div class="stat-num" id="energy-num">50<small>%</small></div>
+            <canvas class="spark" id="spark-energy"></canvas>
+          </div>
+          <p class="stat-status" id="energy-status"></p>
+        </div>
+        <div class="stat-card">
+          <div class="stat-head">
+            <svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M3.5 19c.6-3 2.8-4.5 5.5-4.5s4.9 1.5 5.5 4.5M15.5 5.6a3.2 3.2 0 0 1 0 4.8M18.5 13.5c1.3.8 2 2 2.3 3.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            <span>СОЦ. БАТАРЕЙКА</span>
+          </div>
+          <div class="stat-body">
+            <div class="stat-num violet" id="social-num">50<small>%</small></div>
+            <canvas class="spark" id="spark-social"></canvas>
+          </div>
+          <p class="stat-status" id="social-status"></p>
+        </div>
+      </div>
+
+      <nav class="dock">
+        <button class="dock-btn" id="dock-galaxy" title="Галактика">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M4.5 14.5C2.6 13.8 1.5 12.9 1.5 12c0-1.7 4.7-3 10.5-3s10.5 1.3 10.5 3c0 .9-1.1 1.8-3 2.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </button>
+        <button class="dock-btn" id="dock-stats" title="Статистика">
+          <svg viewBox="0 0 24 24"><path d="M5 20v-6M10 20V9M15 20v-9M20 20V5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </button>
+        <button class="dock-orb" id="dock-orb" title="Новый мир"></button>
+        <button class="dock-btn" id="dock-sound" title="Звук мира">
+          <svg viewBox="0 0 24 24"><path d="M3 12h2M7 8v8M11 5v14M15 8v8M19 10v4M22 11v2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+        </button>
+        <button class="dock-btn" id="dock-profile" title="Профиль">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="8.5" r="3.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M5 20c.8-3.6 3.6-5.5 7-5.5s6.2 1.9 7 5.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        </button>
+      </nav>
+    </div>
+
+    <!-- режим дыхания -->
+    <div id="breath">
+      <div class="breath-ring"><div class="breath-core" id="breath-core"></div></div>
+      <p id="breath-phase">вдох</p>
+      <span id="breath-count">60</span>
+      <button class="btn-ghost" id="breath-exit">завершить</button>
+    </div>
+
+    <!-- bottom sheet -->
+    <div id="sheet">
+      <div id="sheet-backdrop"></div>
+      <div class="sheet-panel">
+        <button class="sheet-close" id="sheet-close">✕</button>
+        <div id="sheet-content"></div>
+      </div>
+    </div>
+  </section>
+
+</div>
+<script src="sounds.js"></script>
+<script src="scenes.js"></script>
+<script src="creature.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
