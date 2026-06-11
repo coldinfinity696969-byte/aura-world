@@ -137,15 +137,15 @@ html, body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 0;
-  padding: 56px 28px 26px;
+  padding: 0 28px 28px;
   text-align: center;
 }
 
 .intro-egg {
   width: 100%;
-  height: 46vh;
+  height: 56vh;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -154,16 +154,15 @@ html, body {
 .intro-egg img {
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  object-fit: cover;
   object-position: 50% 50%;
-  filter: drop-shadow(0 26px 60px rgba(110, 90, 255, 0.25));
-  -webkit-mask-image: radial-gradient(ellipse 66% 60% at 50% 48%, #000 68%, transparent 84%);
-  mask-image: radial-gradient(ellipse 66% 60% at 50% 48%, #000 68%, transparent 84%);
+  -webkit-mask-image: radial-gradient(ellipse 60% 54% at 50% 47%, #000 62%, transparent 82%);
+  mask-image: radial-gradient(ellipse 60% 54% at 50% 47%, #000 62%, transparent 82%);
   user-select: none;
 }
 @keyframes egg-float {
   0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-10px); }
+  50% { transform: translateY(-9px); }
 }
 
 .logo {
@@ -425,8 +424,8 @@ textarea::placeholder { color: rgba(238, 242, 255, 0.35); }
   content: "";
   position: absolute;
   left: 0; right: 0; bottom: 0;
-  height: 58%;
-  background: linear-gradient(rgba(2, 3, 10, 0), rgba(2, 3, 10, 0.55) 40%, rgba(2, 3, 10, 0.85));
+  height: 62%;
+  background: linear-gradient(rgba(2, 3, 10, 0), rgba(2, 3, 10, 0.5) 32%, rgba(2, 3, 10, 0.82) 60%, rgba(2, 3, 10, 0.95));
   pointer-events: none;
   z-index: 0;
 }
@@ -485,7 +484,8 @@ textarea::placeholder { color: rgba(238, 242, 255, 0.35); }
 .rail-item span {
   font-size: 9px;
   letter-spacing: 0.14em;
-  font-weight: 600;
+  font-weight: 700;
+  text-shadow: 0 1px 5px rgba(0, 0, 0, 0.95), 0 0 10px rgba(0, 0, 0, 0.8);
 }
 .rail-icon {
   width: 46px; height: 46px;
@@ -539,7 +539,7 @@ textarea::placeholder { color: rgba(238, 242, 255, 0.35); }
   position: relative;
 }
 .rail-r-item svg { width: 22px; height: 22px; }
-.rail-r-item span { font-size: 9.5px; letter-spacing: 0.1em; color: var(--fg-dim); font-weight: 600; }
+.rail-r-item span { font-size: 9.5px; letter-spacing: 0.1em; color: rgba(238,242,255,0.75); font-weight: 700; text-shadow: 0 1px 5px rgba(0,0,0,0.95); }
 .state-line {
   width: 16px; height: 2px;
   border-radius: 1px;
@@ -588,12 +588,13 @@ textarea::placeholder { color: rgba(238, 242, 255, 0.35); }
   font-size: 11.5px;
   font-weight: 700;
   letter-spacing: 0.16em;
-  color: var(--accent);
+  color: var(--accent-soft);
   margin-bottom: 8px;
+  text-shadow: 0 1px 8px rgba(0, 0, 0, 0.95);
 }
 .world-kicker b {
-  font-weight: 500;
-  color: var(--fg-faint);
+  font-weight: 600;
+  color: rgba(238, 242, 255, 0.7);
   letter-spacing: 0.14em;
 }
 .world-name {
@@ -607,9 +608,9 @@ textarea::placeholder { color: rgba(238, 242, 255, 0.35); }
 }
 .world-sub {
   font-size: 17px;
-  font-weight: 300;
-  color: rgba(255, 255, 255, 0.72);
-  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.7);
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.82);
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.9);
   margin-bottom: 12px;
 }
 .mood-row {
@@ -617,9 +618,10 @@ textarea::placeholder { color: rgba(238, 242, 255, 0.35); }
   align-items: center;
   gap: 8px;
   font-size: 11.5px;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: 0.18em;
-  color: var(--fg-dim);
+  color: rgba(238, 242, 255, 0.75);
+  text-shadow: 0 1px 7px rgba(0, 0, 0, 0.95);
 }
 .mood-row em { font-style: normal; color: var(--accent); }
 .mood-row span { color: var(--accent); }

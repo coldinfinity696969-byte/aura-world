@@ -21,6 +21,14 @@ const SoundEngine = {
   unlock() {
     this.ensure();
     if (this.ctx.state === "suspended") this.ctx.resume();
+    // iOS: «толкаем» контекст беззвучным щелчком, чтобы он точно запустился
+    if (!this._kicked) {
+      const b = this.ctx.createBufferSource();
+      b.buffer = this.ctx.createBuffer(1, 1, this.ctx.sampleRate);
+      b.connect(this.ctx.destination);
+      b.start(0);
+      this._kicked = true;
+    }
   },
 
   noiseBuf(color, secs = 4) {
@@ -100,7 +108,7 @@ const SoundEngine = {
     (this.builders[type] || this.builders.ocean).call(this, ctx, out, chain);
     out.gain.linearRampToValueAtTime(1, ctx.currentTime + 1.6);
     this.master.gain.cancelScheduledValues(ctx.currentTime);
-    this.master.gain.linearRampToValueAtTime(this.enabled ? 0.5 : 0, ctx.currentTime + 0.8);
+    this.master.gain.linearRampToValueAtTime(this.enabled ? 0.85 : 0, ctx.currentTime + 0.8);
   },
 
   fadeOut(chain) {
@@ -146,7 +154,7 @@ const SoundEngine = {
     this.enabled = on;
     if (this.ctx) {
       this.master.gain.cancelScheduledValues(this.ctx.currentTime);
-      this.master.gain.linearRampToValueAtTime(on ? 0.5 : 0, this.ctx.currentTime + 0.6);
+      this.master.gain.linearRampToValueAtTime(on ? 0.85 : 0, this.ctx.currentTime + 0.6);
     }
     return on;
   },
@@ -154,26 +162,37 @@ const SoundEngine = {
 
   builders: {
 
-    /* океан: глубокие волны */
+    /* океан: глубокие волны + слышимый шум прибоя */
     ocean(ctx, out, chain) {
-      const f = this.filter("lowpass", 350);
-      this.lfo(f.frequency, 0.08, 170, chain);
+      const f = this.filter("lowpass", 480);
+      this.lfo(f.frequency, 0.08, 220, chain);
       this.loopSrc(this.noiseBuf("brown", 6), chain).connect(f);
-      f.connect(this.gainNode(0.55)).connect(out);
+      f.connect(this.gainNode(0.5)).connect(out);
+      // средний «шшш» прибоя — его слышно даже на телефоне
+      const surf = this.filter("bandpass", 900, 0.7);
+      const sg = this.gainNode(0.05);
+      this.lfo(sg.gain, 0.1, 0.04, chain);
+      this.loopSrc(this.noiseBuf("white"), chain).connect(surf).connect(sg).connect(out);
     },
 
-    /* космос: двойной дрон + мерцание */
+    /* космос: дрон + слышимый верхний пад */
     space(ctx, out, chain) {
       const f = this.filter("lowpass", 240);
       this.osc("sine", 58, chain).connect(this.gainNode(0.16)).connect(f);
       this.osc("sine", 58.8, chain).connect(this.gainNode(0.16)).connect(f);
       f.connect(out);
-      const shimmer = this.osc("sine", 520, chain);
-      this.lfo(shimmer.frequency, 0.25, 7, chain);
-      shimmer.connect(this.gainNode(0.012)).connect(out);
-      const dust = this.filter("bandpass", 1800, 2);
-      this.loopSrc(this.noiseBuf("white"), chain).connect(dust);
-      dust.connect(this.gainNode(0.012)).connect(out);
+      // слышимый пад из квинты в среднем регистре
+      const pad = this.filter("lowpass", 900);
+      [196, 294, 392].forEach((fr, i) => {
+        const o = this.osc("sine", fr, chain);
+        const g = this.gainNode(0.03);
+        this.lfo(g.gain, 0.12 + i * 0.03, 0.018, chain);
+        o.connect(g).connect(pad);
+      });
+      pad.connect(out);
+      const shimmer = this.osc("sine", 1040, chain);
+      this.lfo(shimmer.frequency, 0.25, 12, chain);
+      shimmer.connect(this.gainNode(0.015)).connect(out);
     },
 
     /* неон: низкий гул + электрические блипы */
