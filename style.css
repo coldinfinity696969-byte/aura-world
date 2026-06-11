@@ -154,11 +154,11 @@ html, body {
 .intro-egg img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  object-position: 50% 40%;
-  filter: drop-shadow(0 26px 60px rgba(110, 90, 255, 0.22));
-  -webkit-mask-image: radial-gradient(ellipse 58% 50% at 50% 46%, #000 62%, transparent 78%);
-  mask-image: radial-gradient(ellipse 58% 50% at 50% 46%, #000 62%, transparent 78%);
+  object-fit: contain;
+  object-position: 50% 50%;
+  filter: drop-shadow(0 26px 60px rgba(110, 90, 255, 0.25));
+  -webkit-mask-image: radial-gradient(ellipse 66% 60% at 50% 48%, #000 68%, transparent 84%);
+  mask-image: radial-gradient(ellipse 66% 60% at 50% 48%, #000 68%, transparent 84%);
   user-select: none;
 }
 @keyframes egg-float {

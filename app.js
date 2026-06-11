@@ -793,6 +793,7 @@ function startIntroParticles() {
 function loadIntroEgg() {
   const img = $("intro-egg-img");
   const candidates = [
+    "assets/intro-egg.jpg", "assets/intro-egg.png",
     "assets/intro.png", "assets/intro.jpg", "assets/intro.webp",
     "assets/worlds/pusto.jpg", "assets/worlds/neon.jpg"
   ];
