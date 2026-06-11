@@ -1,0 +1,14 @@
+{
+  "name": "AURA WORLD",
+  "short_name": "AURA WORLD",
+  "description": "Твоё настроение становится живым миром.",
+  "lang": "ru",
+  "start_url": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#030309",
+  "theme_color": "#070A18",
+  "icons": [
+    { "src": "assets/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

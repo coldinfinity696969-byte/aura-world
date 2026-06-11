@@ -727,10 +727,11 @@ async function exportPNG() {
 function startIntroParticles() {
   const c = $("intro-canvas");
   const ctx = c.getContext("2d");
-  const dots = Array.from({ length: 40 }, () => ({
+  // редкие звёзды по всему кадру — как в референсе
+  const stars = Array.from({ length: 70 }, () => ({
     x: Math.random(), y: Math.random(),
-    r: 0.5 + Math.random() * 1.8, sp: 0.0002 + Math.random() * 0.0006,
-    tw: Math.random() * Math.PI * 2
+    r: 0.3 + Math.random() * 1.3, tw: Math.random() * Math.PI * 2,
+    sp: 0.4 + Math.random() * 1.2
   }));
   let t = 0;
   function resize() {
@@ -744,21 +745,60 @@ function startIntroParticles() {
     if (!$("screen-intro").classList.contains("active")) return;
     t += 0.016;
     const W = c.clientWidth, H = c.clientHeight;
-    const bg = ctx.createRadialGradient(W / 2, H * 0.35, 0, W / 2, H * 0.35, H * 0.8);
-    bg.addColorStop(0, "#121a36");
-    bg.addColorStop(1, "#070a18");
-    ctx.fillStyle = bg;
+    const eggCy = H * 0.4;
+
+    ctx.fillStyle = "#030309";
     ctx.fillRect(0, 0, W, H);
-    for (const d of dots) {
-      d.y -= d.sp;
-      if (d.y < -0.02) d.y = 1.02;
-      ctx.fillStyle = `rgba(150,175,255,${0.2 + 0.5 * Math.abs(Math.sin(t + d.tw))})`;
+
+    // мягкое фиолетовое сияние за яйцом
+    const halo = ctx.createRadialGradient(W / 2, eggCy, 0, W / 2, eggCy, H * 0.42);
+    halo.addColorStop(0, `rgba(96,72,200,${0.16 + 0.04 * Math.sin(t * 0.8)})`);
+    halo.addColorStop(1, "rgba(96,72,200,0)");
+    ctx.fillStyle = halo;
+    ctx.fillRect(0, 0, W, H);
+
+    // звёзды
+    for (const s of stars) {
+      const a = 0.15 + 0.45 * Math.abs(Math.sin(t * s.sp + s.tw));
+      ctx.fillStyle = `rgba(200,205,255,${a})`;
       ctx.beginPath();
-      ctx.arc(d.x * W, d.y * H, d.r, 0, Math.PI * 2);
+      ctx.arc(s.x * W, s.y * H, s.r, 0, Math.PI * 2);
       ctx.fill();
     }
+
+    // портал-кольца под яйцом
+    const portalY = H * 0.72;
+    ctx.save();
+    ctx.globalCompositeOperation = "lighter";
+    for (let i = 0; i < 3; i++) {
+      const rad = (40 + i * 36) * (1 + 0.05 * Math.sin(t * 1.2 - i));
+      ctx.strokeStyle = `rgba(130,100,255,${(0.22 - i * 0.06) * (0.7 + 0.3 * Math.sin(t * 1.2 - i))})`;
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.ellipse(W / 2, portalY, rad, rad * 0.22, 0, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    const pg = ctx.createRadialGradient(W / 2, portalY, 0, W / 2, portalY, 90);
+    pg.addColorStop(0, "rgba(140,110,255,0.25)");
+    pg.addColorStop(1, "rgba(140,110,255,0)");
+    ctx.fillStyle = pg;
+    ctx.fillRect(W / 2 - 110, portalY - 40, 220, 80);
+    ctx.restore();
+
     requestAnimationFrame(loop);
   })();
+}
+
+/* картинка яйца на заставке: свой intro.jpg/png, иначе ближайший мир */
+function loadIntroEgg() {
+  const img = $("intro-egg-img");
+  const candidates = [
+    "assets/intro.png", "assets/intro.jpg", "assets/intro.webp",
+    "assets/worlds/pusto.jpg", "assets/worlds/neon.jpg"
+  ];
+  let i = 0;
+  img.onerror = () => { if (++i < candidates.length) img.src = candidates[i]; };
+  img.src = candidates[0];
 }
 
 /* ---------- check-in ---------- */
@@ -888,6 +928,7 @@ function init() {
   $("sheet-close").onclick = hideSheet;
 
   startIntroParticles();
+  loadIntroEgg();
 
   const h = loadHistory();
   if (h.length) {
