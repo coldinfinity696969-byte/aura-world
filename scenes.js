@@ -1250,27 +1250,70 @@ class ImageWorld extends WorldScene {
   init() {
     this.rippleStyle = "glow";
     this.img = this.p._img;
-    this.motes = Array.from({ length: 34 }, () => ({
-      x: Math.random(), y: Math.random(), r: rand(0.5, 1.7),
-      sp: rand(0.008, 0.028), ph: Math.random() * TAU
+
+    // профиль жизни мира — частицы и атмосфера зависят от типа
+    const A = this.accent, M = this.main;
+    const PROFILES = {
+      ocean:  { color: A, rise: 0.012, wind: 0.6, size: [0.6, 1.7], spark: false, mist: 1.0 },
+      space:  { color: A, rise: 0.002, wind: 0.25, size: [0.5, 1.8], spark: false, mist: 0.5, twinkle: true },
+      neon:   { color: A, rise: 0.05, wind: 0.4, size: [0.5, 1.5], spark: true, mist: 0.35 },
+      forest: { color: mix(A, [190, 255, 175], 0.45), rise: 0.011, wind: 1.5, size: [0.9, 2.1], spark: false, mist: 0.85 },
+      desert: { color: mix(A, [255, 150, 60], 0.5), rise: 0.045, wind: 0.9, size: [0.7, 1.9], spark: true, mist: 0.6 },
+      glass:  { color: A, rise: 0.006, wind: 0.45, size: [0.6, 1.4], spark: false, mist: 1.0 }
+    };
+    this.prof = this.p.golden
+      ? { color: [255, 226, 150], rise: 0.012, wind: 0.6, size: [0.7, 1.9], spark: true, mist: 0.7 }
+      : (PROFILES[this.p.world_type] || PROFILES.ocean);
+
+    const [s0, s1] = this.prof.size;
+    this.parts = Array.from({ length: 40 }, () => ({
+      x: Math.random(), y: Math.random(), r: rand(s0, s1),
+      sp: this.prof.rise * rand(0.5, 1.5), ph: Math.random() * TAU,
+      wph: Math.random() * TAU, drift: rand(0.4, 1)
     }));
+
+    // плывущие облака / туман — «облака чутко двигаются»
+    this.clouds = Array.from({ length: 4 }, (_, i) => ({
+      x: Math.random(), y: rand(0.12, 0.6), r: rand(0.3, 0.55),
+      sp: rand(0.004, 0.011) * (i % 2 ? 1 : -1), tint: Math.random()
+    }));
+
     this.shimmerEvery = 8;
   }
 
   draw(ctx, W, H, t) {
+    const prof = this.prof;
+    const calm = this.calm ? 0.5 : 1;
+
     ctx.fillStyle = "#020207";
     ctx.fillRect(0, 0, W, H);
 
-    /* левитация: картинка чуть крупнее экрана и мягко плывёт */
+    /* левитация + лёгкое «дыхание» самого мира (медленный зум) */
     const iw = this.img.naturalWidth, ih = this.img.naturalHeight;
-    const sc = Math.max(W / iw, H / ih) * 1.05;
+    const breath = 1 + 0.012 * Math.sin(t * 0.45);
+    const sc = Math.max(W / iw, H / ih) * 1.05 * breath;
     const dw = iw * sc, dh = ih * sc;
-    const bob = Math.sin(t * 0.5) * 6 * (this.calm ? 0.5 : 1);
+    const bob = Math.sin(t * 0.5) * 6 * calm;
     const sway = Math.cos(t * 0.34) * 4;
     ctx.drawImage(this.img, (W - dw) / 2 + sway, (H - dh) / 2 + bob, dw, dh);
 
     ctx.save();
     ctx.globalCompositeOperation = "lighter";
+
+    /* плывущие облака/туман поверх мира */
+    if (!this.weather.void) {
+      for (const c of this.clouds) {
+        c.x += c.sp * 0.016 * calm;
+        if (c.x > 1.35) c.x = -0.35;
+        if (c.x < -0.35) c.x = 1.35;
+        const col = mix(this.main, mix(this.accent, [255, 255, 255], 0.3), c.tint);
+        const cg = ctx.createRadialGradient(c.x * W, c.y * H, 0, c.x * W, c.y * H, c.r * W);
+        cg.addColorStop(0, rgba(col, 0.05 * prof.mist));
+        cg.addColorStop(1, rgba(col, 0));
+        ctx.fillStyle = cg;
+        ctx.fillRect(0, 0, W, H);
+      }
+    }
 
     /* дыхание свечения в центре */
     const pulse = 0.045 + 0.045 * Math.sin(t * 0.9);
@@ -1291,6 +1334,45 @@ class ImageWorld extends WorldScene {
     ctx.fillRect(-W / 2, -W * 0.45, W, W * 0.9);
     ctx.restore();
 
+    /* мягкие лучи света, медленно покачиваются */
+    const rayA = 0.05 + 0.03 * Math.sin(t * 0.5);
+    ctx.save();
+    ctx.translate(W * 0.5, -H * 0.1);
+    ctx.rotate(Math.sin(t * 0.12) * 0.12);
+    const rg = ctx.createLinearGradient(0, 0, 0, H);
+    rg.addColorStop(0, rgba(mix(this.accent, [255, 255, 255], 0.4), rayA));
+    rg.addColorStop(1, rgba(this.accent, 0));
+    ctx.fillStyle = rg;
+    ctx.fillRect(-W * 0.18, 0, W * 0.36, H);
+    ctx.restore();
+
+    /* частицы с «ветром»: колышутся и летят, gust меняет силу порывов */
+    if (!this.weather.void) {
+      const gust = (0.6 + 0.4 * Math.sin(t * 0.35)) * prof.wind;
+      for (const m of this.parts) {
+        m.y -= m.sp * 0.016 * calm;
+        const windX = Math.sin(t * 0.8 * m.drift + m.wph) * 0.0016 * gust;
+        m.x += windX;
+        if (m.y < -0.03) { m.y = 1.03; m.x = Math.random(); }
+        if (m.x > 1.05) m.x -= 1.1; else if (m.x < -0.05) m.x += 1.1;
+        const px = m.x * W, py = m.y * H;
+        const tw = prof.twinkle ? Math.abs(Math.sin(t * 1.8 + m.ph)) : (0.55 + 0.45 * Math.sin(t * 1.5 + m.ph));
+        const a = 0.12 + 0.32 * tw;
+        if (prof.spark) {
+          const grd = ctx.createRadialGradient(px, py, 0, px, py, m.r * 3);
+          grd.addColorStop(0, rgba(prof.color, a));
+          grd.addColorStop(1, rgba(prof.color, 0));
+          ctx.fillStyle = grd;
+          ctx.fillRect(px - m.r * 3, py - m.r * 3, m.r * 6, m.r * 6);
+        } else {
+          ctx.fillStyle = rgba(prof.color, a);
+          ctx.beginPath();
+          ctx.arc(px, py, m.r, 0, TAU);
+          ctx.fill();
+        }
+      }
+    }
+
     /* блик-шиммер, проходящий по стеклу */
     const sp = (t % this.shimmerEvery) / this.shimmerEvery;
     if (sp < 0.22) {
@@ -1306,17 +1388,6 @@ class ImageWorld extends WorldScene {
       ctx.restore();
     }
 
-    /* пыль-частицы */
-    if (!this.weather.void) {
-      for (const m of this.motes) {
-        m.y -= m.sp * 0.016;
-        if (m.y < -0.02) { m.y = 1.02; m.x = Math.random(); }
-        ctx.fillStyle = rgba(this.accent, 0.1 + 0.12 * Math.sin(t * 1.5 + m.ph));
-        ctx.beginPath();
-        ctx.arc(m.x * W, m.y * H, m.r, 0, TAU);
-        ctx.fill();
-      }
-    }
     ctx.restore();
   }
 }

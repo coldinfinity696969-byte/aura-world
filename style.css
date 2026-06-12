@@ -409,6 +409,7 @@ textarea::placeholder { color: rgba(238, 242, 255, 0.35); }
   width: 116px; height: 116px;
   border-radius: 50%;
   overflow: hidden;
+  clip-path: circle(50%);
   background: radial-gradient(circle at 38% 32%, #d6e2ff 0%, #6a8cff 32%, #7b5cff 62%, #261a66 100%);
   box-shadow: 0 0 55px rgba(110, 90, 255, 0.6), 0 0 130px rgba(120, 90, 255, 0.35), inset 0 0 34px rgba(170, 185, 255, 0.55);
   animation: energy-pulse 2.6s ease-in-out infinite;
@@ -996,6 +997,7 @@ textarea::placeholder { color: rgba(238, 242, 255, 0.35); }
   width: 110px; height: 110px;
   border-radius: 50%;
   overflow: hidden;
+  clip-path: circle(50%);
   background: radial-gradient(circle at 38% 32%, rgba(255,255,255,0.9), color-mix(in srgb, var(--accent) 80%, white) 30%, var(--accent) 62%, rgba(6,9,26,0.92));
   box-shadow: 0 0 55px color-mix(in srgb, var(--accent) 65%, transparent), inset 0 0 28px color-mix(in srgb, var(--accent-soft) 50%, transparent);
   transform: scale(1);
