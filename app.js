@@ -442,6 +442,9 @@ async function openWorld(params, opts = {}) {
 /* ---------- шиты ---------- */
 
 function showSheet(html) {
+  const toast = $("phrase-toast");      // чтобы фраза дня не дублировала текст в шите
+  toast.classList.remove("show");
+  clearTimeout(toast._t);
   $("sheet-content").innerHTML = html;
   $("sheet").classList.add("open");
 }

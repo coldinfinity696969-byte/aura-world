@@ -14,7 +14,27 @@ const SoundEngine = {
     this.ctx = new AC();
     this.master = this.ctx.createGain();
     this.master.gain.value = 0;
-    this.master.connect(this.ctx.destination);
+
+    this.isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+      (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+
+    // iOS: пускаем звук через <audio>-элемент (MediaStream) — тогда он играет
+    // даже при включённом «беззвучном» режиме, как видео. На десктопе — прямой выход.
+    if (this.isIOS && this.ctx.createMediaStreamDestination) {
+      try {
+        const dest = this.ctx.createMediaStreamDestination();
+        this.master.connect(dest);
+        const a = document.createElement("audio");
+        a.setAttribute("playsinline", "");
+        a.autoplay = true;
+        a.srcObject = dest.stream;
+        this._mediaEl = a;
+      } catch (e) {
+        this.master.connect(this.ctx.destination); // запасной путь
+      }
+    } else {
+      this.master.connect(this.ctx.destination);
+    }
   },
 
   /* вызывается из обработчиков кликов — разблокирует автозапуск.
@@ -48,17 +68,8 @@ const SoundEngine = {
       this._keepAlive = src;
     }
 
-    // 3) разбудить <audio>-сессию для iOS (звук при включённом «беззвучном»)
-    if (!this._silentEl) {
-      const a = document.createElement("audio");
-      a.loop = true;
-      a.setAttribute("playsinline", "");
-      // 0.05с тишины (WAV data-URI)
-      a.src = "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=";
-      a.volume = 0.01;
-      a.play().catch(() => {});
-      this._silentEl = a;
-    }
+    // 3) запустить медиа-элемент iOS (внутри жеста) — звук пойдёт через него
+    if (this._mediaEl) this._mediaEl.play().catch(() => {});
   },
 
   noiseBuf(color, secs = 4) {

@@ -405,15 +405,38 @@ textarea::placeholder { color: rgba(238, 242, 255, 0.35); }
   background: radial-gradient(100% 80% at 50% 30%, #131c3a 0%, #070a18 75%);
 }
 .loading-orb {
-  width: 90px; height: 90px;
+  position: relative;
+  width: 116px; height: 116px;
   border-radius: 50%;
-  background: radial-gradient(circle at 35% 35%, #8fb0ff, #5c8dff 45%, #1a2348 100%);
-  box-shadow: 0 0 60px rgba(92, 141, 255, 0.7), 0 0 140px rgba(123, 92, 255, 0.4);
-  animation: orb 1.8s ease-in-out infinite;
+  overflow: hidden;
+  background: radial-gradient(circle at 38% 32%, #d6e2ff 0%, #6a8cff 32%, #7b5cff 62%, #261a66 100%);
+  box-shadow: 0 0 55px rgba(110, 90, 255, 0.6), 0 0 130px rgba(120, 90, 255, 0.35), inset 0 0 34px rgba(170, 185, 255, 0.55);
+  animation: energy-pulse 2.6s ease-in-out infinite;
 }
-@keyframes orb {
-  0%, 100% { transform: scale(1); filter: hue-rotate(0deg); }
-  50% { transform: scale(1.18); filter: hue-rotate(40deg); }
+.loading-orb::before {
+  content: "";
+  position: absolute;
+  inset: -40%;
+  background: conic-gradient(from 0deg,
+    transparent 0%, rgba(150, 115, 255, 0.7) 12%, transparent 30%,
+    rgba(90, 205, 255, 0.6) 48%, transparent 64%,
+    rgba(210, 120, 255, 0.65) 82%, transparent 100%);
+  mix-blend-mode: screen;
+  animation: spin 3.4s linear infinite;
+}
+.loading-orb::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 34%, rgba(255, 255, 255, 0.92), transparent 46%);
+}
+@keyframes energy-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 .loading-text { color: var(--fg-dim); font-size: 16px; letter-spacing: 0.04em; }
 
@@ -969,12 +992,32 @@ textarea::placeholder { color: rgba(238, 242, 255, 0.35); }
   border-radius: 50%;
 }
 .breath-core {
+  position: relative;
   width: 110px; height: 110px;
   border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, rgba(255,255,255,0.85), color-mix(in srgb, var(--accent) 80%, white) 30%, var(--accent) 60%, rgba(6,9,26,0.9));
-  box-shadow: 0 0 50px color-mix(in srgb, var(--accent) 60%, transparent);
+  overflow: hidden;
+  background: radial-gradient(circle at 38% 32%, rgba(255,255,255,0.9), color-mix(in srgb, var(--accent) 80%, white) 30%, var(--accent) 62%, rgba(6,9,26,0.92));
+  box-shadow: 0 0 55px color-mix(in srgb, var(--accent) 65%, transparent), inset 0 0 28px color-mix(in srgb, var(--accent-soft) 50%, transparent);
   transform: scale(1);
   transition: transform 4s cubic-bezier(0.4, 0, 0.4, 1);
+}
+.breath-core::before {
+  content: "";
+  position: absolute;
+  inset: -40%;
+  background: conic-gradient(from 0deg,
+    transparent 0%, color-mix(in srgb, var(--accent) 70%, transparent) 14%, transparent 32%,
+    color-mix(in srgb, var(--accent-soft) 65%, transparent) 52%, transparent 70%,
+    color-mix(in srgb, #d27bff 60%, transparent) 86%, transparent 100%);
+  mix-blend-mode: screen;
+  animation: spin 5s linear infinite;
+}
+.breath-core::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 34%, rgba(255,255,255,0.9), transparent 48%);
 }
 #breath-phase {
   font-size: 22px;
