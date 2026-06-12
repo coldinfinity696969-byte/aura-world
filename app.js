@@ -745,13 +745,13 @@ function startIntroParticles() {
     if (!$("screen-intro").classList.contains("active")) return;
     t += 0.016;
     const W = c.clientWidth, H = c.clientHeight;
-    const eggCy = H * 0.29;
+    const eggCy = H * 0.32;
 
     ctx.fillStyle = "#030309";
     ctx.fillRect(0, 0, W, H);
 
     // мягкое фиолетовое сияние за яйцом
-    const halo = ctx.createRadialGradient(W / 2, eggCy, 0, W / 2, eggCy, H * 0.42);
+    const halo = ctx.createRadialGradient(W / 2, eggCy, 0, W / 2, eggCy, H * 0.4);
     halo.addColorStop(0, `rgba(96,72,200,${0.16 + 0.04 * Math.sin(t * 0.8)})`);
     halo.addColorStop(1, "rgba(96,72,200,0)");
     ctx.fillStyle = halo;
@@ -765,25 +765,6 @@ function startIntroParticles() {
       ctx.arc(s.x * W, s.y * H, s.r, 0, Math.PI * 2);
       ctx.fill();
     }
-
-    // портал-кольца под яйцом
-    const portalY = H * 0.57;
-    ctx.save();
-    ctx.globalCompositeOperation = "lighter";
-    for (let i = 0; i < 3; i++) {
-      const rad = (48 + i * 40) * (1 + 0.05 * Math.sin(t * 1.2 - i));
-      ctx.strokeStyle = `rgba(130,100,255,${(0.2 - i * 0.055) * (0.7 + 0.3 * Math.sin(t * 1.2 - i))})`;
-      ctx.lineWidth = 1.2;
-      ctx.beginPath();
-      ctx.ellipse(W / 2, portalY, rad, rad * 0.2, 0, 0, Math.PI * 2);
-      ctx.stroke();
-    }
-    const pg = ctx.createRadialGradient(W / 2, portalY, 0, W / 2, portalY, 100);
-    pg.addColorStop(0, "rgba(140,110,255,0.22)");
-    pg.addColorStop(1, "rgba(140,110,255,0)");
-    ctx.fillStyle = pg;
-    ctx.fillRect(W / 2 - 120, portalY - 44, 240, 88);
-    ctx.restore();
 
     requestAnimationFrame(loop);
   })();
@@ -941,14 +922,12 @@ function init() {
 
   const h = loadHistory();
   if (h.length) {
-    const resume = document.createElement("button");
-    resume.className = "btn-ghost intro-resume";
-    resume.textContent = "Открыть прошлый мир →";
+    const resume = $("btn-resume");
+    resume.hidden = false;
     resume.onclick = () => {
       SoundEngine.unlock();
       openWorld(h[h.length - 1], { historyIndex: h.length - 1 });
     };
-    $("btn-start").after(resume);
   }
 }
 
