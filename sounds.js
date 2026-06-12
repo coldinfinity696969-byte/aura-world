@@ -97,15 +97,17 @@ const SoundEngine = {
     chain.timers.push(setTimeout(loop, 600 + Math.random() * 1800));
   },
 
-  play(type) {
+  play(key, params) {
     this.ensure();
     const ctx = this.ctx;
+    if (ctx.state === "suspended") ctx.resume(); // критично для телефона: контекст мог уснуть
     if (this.current) this.fadeOut(this.current);
     const out = this.gainNode(0);
     out.connect(this.master);
     const chain = { out, stops: [], timers: [] };
     this.current = chain;
-    (this.builders[type] || this.builders.ocean).call(this, ctx, out, chain);
+    const p = params || {};
+    (this.builders[key] || this.builders.ocean).call(this, ctx, out, chain, p);
     out.gain.linearRampToValueAtTime(1, ctx.currentTime + 1.6);
     this.master.gain.cancelScheduledValues(ctx.currentTime);
     this.master.gain.linearRampToValueAtTime(this.enabled ? 0.85 : 0, ctx.currentTime + 0.8);
@@ -133,6 +135,7 @@ const SoundEngine = {
   setRain(on) {
     if (!on && !this.rainGain) return;
     this.ensure();
+    if (this.ctx.state === "suspended") this.ctx.resume();
     if (!this.rainGain) {
       const src = this.ctx.createBufferSource();
       src.buffer = this.noiseBuf("white");
@@ -259,6 +262,91 @@ const SoundEngine = {
         const f = this.filter("bandpass", 2400 + Math.random() * 2000, 3);
         s.connect(f).connect(this.gainNode(0.03)).connect(out);
         s.start();
+      });
+    },
+
+    /* глубина (хочу исчезнуть): подводно, приглушённо + сонар */
+    deep(ctx, out, chain) {
+      const f = this.filter("lowpass", 200);
+      this.lfo(f.frequency, 0.05, 90, chain);
+      this.loopSrc(this.noiseBuf("brown", 6), chain).connect(f);
+      f.connect(this.gainNode(0.45)).connect(out);
+      this.osc("sine", 44, chain).connect(this.gainNode(0.18)).connect(out); // суб-дрон
+      // редкий сонар-пинг, уходящий вниз
+      this.every(chain, 6000, 11000, () => {
+        const o = ctx.createOscillator();
+        o.type = "sine";
+        o.frequency.setValueAtTime(440, ctx.currentTime);
+        o.frequency.exponentialRampToValueAtTime(180, ctx.currentTime + 1.4);
+        const g = this.gainNode(0);
+        g.gain.linearRampToValueAtTime(0.06, ctx.currentTime + 0.04);
+        g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 1.6);
+        o.connect(g).connect(out);
+        o.start();
+        o.stop(ctx.currentTime + 1.7);
+      });
+    },
+
+    /* пустота (пусто): один холодный дрон + далёкие вздохи */
+    hollow(ctx, out, chain) {
+      const f = this.filter("lowpass", 320);
+      this.osc("sine", 65, chain).connect(this.gainNode(0.2)).connect(out);
+      const swell = this.filter("bandpass", 600, 0.8);
+      const sg = this.gainNode(0);
+      this.lfo(sg.gain, 0.035, 0.05, chain); // медленные «вздохи» пространства
+      this.loopSrc(this.noiseBuf("white"), chain).connect(swell).connect(sg).connect(out);
+      const high = this.osc("sine", 1320, chain);
+      this.lfo(high.frequency, 0.07, 30, chain);
+      high.connect(this.gainNode(0.006)).connect(out);
+    },
+
+    /* нежность (влюблён): тёплый пад + мягкие колокольчики */
+    tender(ctx, out, chain) {
+      const pad = this.filter("lowpass", 1200);
+      [220, 277, 330].forEach((fr, i) => { // тёплое мажорное трезвучие
+        const o = this.osc("sine", fr, chain);
+        const g = this.gainNode(0.035);
+        this.lfo(g.gain, 0.1 + i * 0.04, 0.02, chain);
+        o.connect(g).connect(pad);
+      });
+      pad.connect(out);
+      const air = this.filter("bandpass", 2000, 0.5);
+      this.loopSrc(this.noiseBuf("white"), chain).connect(air).connect(this.gainNode(0.02)).connect(out);
+      // мягкие колокольчики по пентатонике
+      const notes = [523, 587, 659, 784, 880];
+      this.every(chain, 3000, 6500, () => {
+        const o = ctx.createOscillator();
+        o.type = "sine";
+        o.frequency.value = notes[Math.floor(Math.random() * notes.length)];
+        const g = this.gainNode(0);
+        g.gain.linearRampToValueAtTime(0.05, ctx.currentTime + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 1.8);
+        o.connect(g).connect(out);
+        o.start();
+        o.stop(ctx.currentTime + 1.9);
+      });
+    },
+
+    /* меланхолия (красиво, но больно): минорные ноты-капли + пад */
+    melancholy(ctx, out, chain) {
+      const pad = this.filter("lowpass", 900);
+      [220, 262, 330].forEach((fr) => { // ля-минор
+        this.osc("sine", fr, chain).connect(this.gainNode(0.028)).connect(pad);
+      });
+      pad.connect(out);
+      this.osc("sine", 55, chain).connect(this.gainNode(0.1)).connect(out);
+      // редкие «фортепианные» капли минорной пентатоники
+      const notes = [440, 523, 587, 659, 784];
+      this.every(chain, 3200, 7000, () => {
+        const o = ctx.createOscillator();
+        o.type = "triangle";
+        o.frequency.value = notes[Math.floor(Math.random() * notes.length)];
+        const g = this.gainNode(0);
+        g.gain.linearRampToValueAtTime(0.045, ctx.currentTime + 0.01);
+        g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 2.4);
+        o.connect(g).connect(out);
+        o.start();
+        o.stop(ctx.currentTime + 2.5);
       });
     },
 

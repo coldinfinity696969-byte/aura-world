@@ -149,6 +149,21 @@ const RARE_BY_TYPE = {
   neon: ["разлом", "Разлом в комнате"]
 };
 
+/* свой звук на каждое настроение — грустные миры больше не звучат одинаково */
+const SOUND_BY_MOOD = {
+  "устал": "ocean",
+  "пусто": "hollow",
+  "злой": "desert",
+  "тревожно": "neon",
+  "спокойно": "forest",
+  "влюблён": "tender",
+  "хочу исчезнуть": "deep",
+  "хочу движ": "neon",
+  "хаос": "desert",
+  "красиво, но больно": "melancholy",
+  "норм, но странно": "glass"
+};
+
 function generateWorld(a) {
   const p = MOOD_PRESETS[a.mood] || MOOD_PRESETS["норм, но странно"];
   const weather = p.world_type === "glass" ? "rain" : (a.social < 40 || a.noise > 70 ? "mist" : "clear");
@@ -184,12 +199,14 @@ function generateWorld(a) {
     rare: rareRoll ? rareRoll[0] : null,
     rare_text: rareRoll ? rareRoll[1] : null,
     mood: a.mood,
+    sound_key: SOUND_BY_MOOD[a.mood] || p.world_type,
     note_flagged: checkNoteSafety(a.note),
     created_at: new Date().toISOString(),
     likes: 0
   };
   if (golden) {
     Object.assign(out, {
+      sound_key: "tender",
       golden: true,
       world_name: "Золотой час",
       kicker: "СЕКРЕТНЫЙ МИР",
@@ -409,7 +426,7 @@ async function openWorld(params, opts = {}) {
   scene.resize();
 
   /* звук мира — сразу */
-  SoundEngine.play(params.world_type);
+  SoundEngine.play(params.sound_key || params.world_type, params);
   $("dock-sound").classList.toggle("on", SoundEngine.enabled);
 
   const toast = $("phrase-toast");
@@ -902,7 +919,12 @@ function init() {
   $("dock-orb").onclick = startCheckin;
   $("dock-sound").onclick = () => {
     SoundEngine.unlock();
-    $("dock-sound").classList.toggle("on", SoundEngine.toggle());
+    const on = SoundEngine.toggle();
+    // на телефоне это прямой жест — гарантированно запускаем звук мира
+    if (on && worldParams && !SoundEngine.current) {
+      SoundEngine.play(worldParams.sound_key || worldParams.world_type, worldParams);
+    }
+    $("dock-sound").classList.toggle("on", on);
   };
   $("dock-profile").onclick = openProfileSheet;
 
