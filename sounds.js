@@ -17,17 +17,47 @@ const SoundEngine = {
     this.master.connect(this.ctx.destination);
   },
 
-  /* вызывается из обработчиков кликов — разблокирует автозапуск */
+  /* вызывается из обработчиков кликов — разблокирует автозапуск.
+     ВАЖНО для телефона: на мобильных resume() срабатывает только внутри
+     жеста. Поэтому здесь, в касании, запускаем вечный беззвучный источник —
+     он держит контекст «running», и он не засыпает до открытия мира,
+     когда play() уже не внутри жеста. */
   unlock() {
     this.ensure();
     if (this.ctx.state === "suspended") this.ctx.resume();
-    // iOS: «толкаем» контекст беззвучным щелчком, чтобы он точно запустился
+
+    // 1) iOS-«толчок» одноразовым нулевым буфером
     if (!this._kicked) {
       const b = this.ctx.createBufferSource();
       b.buffer = this.ctx.createBuffer(1, 1, this.ctx.sampleRate);
       b.connect(this.ctx.destination);
       b.start(0);
       this._kicked = true;
+    }
+
+    // 2) вечный keep-alive: 1с тишины в цикле — контекст всё время «работает»
+    if (!this._keepAlive) {
+      const buf = this.ctx.createBuffer(1, this.ctx.sampleRate, this.ctx.sampleRate);
+      const src = this.ctx.createBufferSource();
+      src.buffer = buf;
+      src.loop = true;
+      const g = this.ctx.createGain();
+      g.gain.value = 0.0001;
+      src.connect(g).connect(this.ctx.destination);
+      src.start();
+      this._keepAlive = src;
+    }
+
+    // 3) разбудить <audio>-сессию для iOS (звук при включённом «беззвучном»)
+    if (!this._silentEl) {
+      const a = document.createElement("audio");
+      a.loop = true;
+      a.setAttribute("playsinline", "");
+      // 0.05с тишины (WAV data-URI)
+      a.src = "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=";
+      a.volume = 0.01;
+      a.play().catch(() => {});
+      this._silentEl = a;
     }
   },
 
